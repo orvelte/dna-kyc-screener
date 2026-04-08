@@ -1,0 +1,4 @@
+{
+  "_comment": "ISO 3166-1 alpha-2 country codes subject to comprehensive US sanctions. Hard-block in entity screener — no fuzzy matching attempted for these. Source: OFAC country programs (public). Update as programs change.",
+  "embargoed": ["CU", "IR", "KP", "RU", "SY", "BY"]
+}

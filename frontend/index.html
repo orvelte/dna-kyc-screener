@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DNA KYC Screener — Demo</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, sans-serif;
+      font-size: 14px;
+      background: #f5f5f5;
+      color: #1a1a1a;
+      padding: 2rem;
+    }
+
+    header {
+      max-width: 780px;
+      margin: 0 auto 2rem;
+    }
+
+    header h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.25rem; }
+    header p  { color: #555; font-size: 0.85rem; }
+
+    form {
+      max-width: 780px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      background: #fff;
+      padding: 1.5rem;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+
+    .full { grid-column: 1 / -1; }
+
+    label { display: flex; flex-direction: column; gap: 4px; font-weight: 500; }
+    label span { font-weight: 400; color: #666; font-size: 0.8rem; }
+
+    input, select, textarea {
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #fafafa;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: 2px solid #2563eb;
+      background: #fff;
+    }
+
+    textarea { resize: vertical; min-height: 90px; font-family: monospace; font-size: 12px; }
+
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-top: 4px;
+    }
+
+    .checkbox-row input { width: auto; }
+
+    button[type="submit"] {
+      grid-column: 1 / -1;
+      padding: 10px;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button[type="submit"]:hover { background: #1d4ed8; }
+    button[type="submit"]:disabled { background: #93c5fd; cursor: not-allowed; }
+
+    #result {
+      max-width: 780px;
+      margin: 1.5rem auto 0;
+    }
+
+    .decision-card {
+      border-radius: 6px;
+      padding: 1.25rem 1.5rem;
+      border: 1px solid;
+    }
+
+    .decision-card.approve { background: #f0fdf4; border-color: #86efac; }
+    .decision-card.flag    { background: #fffbeb; border-color: #fcd34d; }
+    .decision-card.reject  { background: #fef2f2; border-color: #fca5a5; }
+
+    .decision-card h2 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .decision-card.approve h2 { color: #15803d; }
+    .decision-card.flag    h2 { color: #92400e; }
+    .decision-card.reject  h2 { color: #b91c1c; }
+
+    .scores {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .score-chip {
+      background: rgba(0,0,0,0.06);
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+    }
+
+    .score-chip strong { display: block; font-size: 1rem; }
+
+    .rules { font-size: 0.82rem; color: #444; margin-top: 0.5rem; }
+    .rules ul { padding-left: 1.1rem; margin-top: 4px; }
+
+    .meta {
+      margin-top: 0.75rem;
+      font-size: 0.75rem;
+      color: #888;
+    }
+
+    .error-card {
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      border-radius: 6px;
+      padding: 1rem 1.25rem;
+      color: #991b1b;
+      font-size: 0.875rem;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    fieldset {
+      grid-column: 1 / -1;
+      border: 1px solid #e5e5e5;
+      border-radius: 4px;
+      padding: 0.75rem 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    legend {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #888;
+      padding: 0 4px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>DNA KYC Screener</h1>
+  <p>Demo interface — submit a synthesis order to the local screening API (POST /screen).</p>
+</header>
+
+<form id="screen-form">
+
+  <fieldset>
+    <legend>Customer</legend>
+
+    <label>
+      Name
+      <input type="text" name="name" value="Jane Smith" required />
+    </label>
+
+    <label>
+      Institution <span>(optional)</span>
+      <input type="text" name="institution" value="University of Edinburgh" />
+    </label>
+
+    <label>
+      Country <span>ISO alpha-2</span>
+      <input type="text" name="country" value="GB" maxlength="2" pattern="[A-Za-z]{2}" required />
+    </label>
+
+    <label>
+      Customer type
+      <select name="customer_type">
+        <option value="academic" selected>Academic</option>
+        <option value="biotech">Biotech</option>
+        <option value="pharma">Pharma</option>
+        <option value="government">Government</option>
+        <option value="commercial">Commercial</option>
+        <option value="individual">Individual</option>
+        <option value="unknown">Unknown</option>
+      </select>
+    </label>
+
+    <label>
+      End use
+      <input type="text" name="end_use" value="vaccine research" required />
+    </label>
+
+    <label>
+      Address type
+      <select name="address_type">
+        <option value="institutional" selected>Institutional</option>
+        <option value="residential">Residential</option>
+        <option value="po_box">PO Box</option>
+        <option value="unknown">Unknown</option>
+      </select>
+    </label>
+
+    <label class="full">
+      <div class="checkbox-row">
+        <input type="checkbox" name="institution_verified" id="inst-verified" checked />
+        <span style="font-weight:500">Institution verified</span>
+      </div>
+    </label>
+  </fieldset>
+
+  <label class="full">
+    Sequence
+    <textarea name="sequence" required placeholder="Paste a raw nucleotide string, FASTA record, or GenBank accession…">AAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTGGGCCCAAAATTTT</textarea>
+  </label>
+
+  <label>
+    Sequence format
+    <select name="format">
+      <option value="raw" selected>Raw nucleotide</option>
+      <option value="fasta">FASTA</option>
+      <option value="accession">GenBank accession</option>
+    </select>
+  </label>
+
+  <label>
+    Quantity (bp) <span>(optional)</span>
+    <input type="number" name="quantity_bp" min="1" placeholder="e.g. 500" />
+  </label>
+
+  <button type="submit" id="submit-btn">Run screen</button>
+
+</form>
+
+<div id="result"></div>
+
+<script>
+  const API = 'http://localhost:8000/screen';
+
+  document.getElementById('screen-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-btn');
+    const resultEl = document.getElementById('result');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Screening…';
+    resultEl.innerHTML = '';
+
+    const fd = new FormData(e.target);
+
+    const quantity = fd.get('quantity_bp');
+    const body = {
+      customer: {
+        name: fd.get('name'),
+        institution: fd.get('institution') || null,
+        country: fd.get('country').toUpperCase(),
+        customer_type: fd.get('customer_type'),
+        end_use: fd.get('end_use'),
+        address_type: fd.get('address_type'),
+        institution_verified: fd.get('institution_verified') === 'on',
+      },
+      sequence: fd.get('sequence').trim(),
+      format: fd.get('format'),
+      quantity_bp: quantity ? parseInt(quantity, 10) : null,
+    };
+
+    try {
+      const res = await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        resultEl.innerHTML = `<div class="error-card"><strong>Error ${res.status}:</strong> ${data.detail ?? JSON.stringify(data)}</div>`;
+        return;
+      }
+
+      const d = data.decision;
+      const labels = { approve: 'Approved', flag: 'Flagged for review', reject: 'Rejected' };
+      const rules = data.rules_triggered.length
+        ? `<div class="rules">Rules triggered:<ul>${data.rules_triggered.map(r => `<li>${r}</li>`).join('')}</ul></div>`
+        : `<div class="rules">No rules triggered.</div>`;
+
+      resultEl.innerHTML = `
+        <div class="decision-card ${d}">
+          <h2>${labels[d]}</h2>
+          <div class="scores">
+            <div class="score-chip"><strong>${data.risk_score}</strong>risk score</div>
+            <div class="score-chip"><strong>${data.module_scores.sequence.toFixed(1)}</strong>sequence</div>
+            <div class="score-chip"><strong>${data.module_scores.entity.toFixed(1)}</strong>entity</div>
+            <div class="score-chip"><strong>${data.module_scores.legitimacy.toFixed(1)}</strong>legitimacy</div>
+          </div>
+          ${rules}
+          <div class="meta">audit_id: ${data.audit_id} &nbsp;|&nbsp; ${new Date(data.timestamp).toLocaleString()}</div>
+        </div>`;
+
+    } catch (err) {
+      resultEl.innerHTML = `<div class="error-card"><strong>Could not reach API.</strong> Is <code>uvicorn api.main:app --reload</code> running on port 8000?</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Run screen';
+    }
+  });
+</script>
+
+</body>
+</html>

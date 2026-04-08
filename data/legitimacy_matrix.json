@@ -1,0 +1,115 @@
+{
+  "_comment": "Operator-managed legitimacy rule table. Edit this file to tune rules — do not modify legitimacy_rules.py. Each rule contributes its score when ALL conditions match. Final rule_score = min(1.0, sum of triggered rule scores).",
+  "_fields": {
+    "end_use": "string — e.g. 'research', 'commercial', 'educational', 'personal', 'unknown'",
+    "customer_type": "string — e.g. 'academic', 'biotech', 'pharma', 'government', 'individual', 'commercial', 'unknown'",
+    "quantity_bp": "int — number of base pairs ordered",
+    "address_type": "string — 'institutional', 'residential', 'po_box', 'unknown'",
+    "institution_verified": "bool — whether the institution was independently verified"
+  },
+  "_ops": ["eq", "neq", "in", "not_in", "gt", "gte", "lt", "lte"],
+  "rules": [
+    {
+      "name": "unknown_end_use",
+      "description": "End use is unknown or unspecified — unable to assess plausibility.",
+      "score": 0.55,
+      "conditions": [
+        {"field": "end_use", "op": "eq", "value": "unknown"}
+      ]
+    },
+    {
+      "name": "personal_end_use",
+      "description": "End use declared as personal — implausible for synthetic DNA orders.",
+      "score": 0.65,
+      "conditions": [
+        {"field": "end_use", "op": "eq", "value": "personal"}
+      ]
+    },
+    {
+      "name": "unknown_customer_type",
+      "description": "Customer type is unknown — cannot assess plausibility of stated end use.",
+      "score": 0.40,
+      "conditions": [
+        {"field": "customer_type", "op": "eq", "value": "unknown"}
+      ]
+    },
+    {
+      "name": "individual_residential",
+      "description": "Individual customer at a residential address — high-risk combination for DNA synthesis.",
+      "score": 0.60,
+      "conditions": [
+        {"field": "customer_type", "op": "eq", "value": "individual"},
+        {"field": "address_type", "op": "eq", "value": "residential"}
+      ]
+    },
+    {
+      "name": "individual_po_box",
+      "description": "Individual customer using a PO box — concealed address for an individual order.",
+      "score": 0.50,
+      "conditions": [
+        {"field": "customer_type", "op": "eq", "value": "individual"},
+        {"field": "address_type", "op": "eq", "value": "po_box"}
+      ]
+    },
+    {
+      "name": "po_box_address",
+      "description": "PO box address for any customer — reduces traceability.",
+      "score": 0.25,
+      "conditions": [
+        {"field": "address_type", "op": "eq", "value": "po_box"}
+      ]
+    },
+    {
+      "name": "unknown_address",
+      "description": "Address type is unknown — cannot assess physical location plausibility.",
+      "score": 0.30,
+      "conditions": [
+        {"field": "address_type", "op": "eq", "value": "unknown"}
+      ]
+    },
+    {
+      "name": "unverified_academic",
+      "description": "Academic customer with unverified institution — claimed affiliation cannot be confirmed.",
+      "score": 0.35,
+      "conditions": [
+        {"field": "customer_type", "op": "eq", "value": "academic"},
+        {"field": "institution_verified", "op": "eq", "value": false}
+      ]
+    },
+    {
+      "name": "unverified_government",
+      "description": "Government customer with unverified institution — claimed affiliation cannot be confirmed.",
+      "score": 0.35,
+      "conditions": [
+        {"field": "customer_type", "op": "eq", "value": "government"},
+        {"field": "institution_verified", "op": "eq", "value": false}
+      ]
+    },
+    {
+      "name": "large_order_unverified",
+      "description": "Order exceeds 5000bp from an unverified institution — volume warrants additional scrutiny.",
+      "score": 0.30,
+      "conditions": [
+        {"field": "quantity_bp", "op": "gt", "value": 5000},
+        {"field": "institution_verified", "op": "eq", "value": false}
+      ]
+    },
+    {
+      "name": "very_large_order",
+      "description": "Order exceeds 20000bp — unusually large synthesis request regardless of customer type.",
+      "score": 0.25,
+      "conditions": [
+        {"field": "quantity_bp", "op": "gt", "value": 20000}
+      ]
+    },
+    {
+      "name": "commercial_end_use_individual",
+      "description": "Individual customer declaring commercial end use — implausible combination.",
+      "score": 0.45,
+      "conditions": [
+        {"field": "customer_type", "op": "eq", "value": "individual"},
+        {"field": "end_use", "op": "eq", "value": "commercial"}
+      ]
+    }
+  ]
+}

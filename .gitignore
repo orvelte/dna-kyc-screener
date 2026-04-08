@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.*
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Packaging / build tools
+*.whl
+MANIFEST
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Project-specific: audit log contains PII-adjacent decision records
+audit/decisions.jsonl
+audit/*.jsonl
+
+# Project-specific: replace with real watchlist data and keep out of version control
+data/watchlist_sample.csv
